@@ -1,250 +1,129 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Game Hub</title>
-<style>
-  :root {
-    --bg: #14151a;
-    --card: #1e2028;
-    --card-hover: #272a35;
-    --text: #eceef3;
-    --muted: #9aa0b0;
-    --accent: #ff6b3d;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    min-height: 100vh;
-  }
-  header {
-    padding: 28px 20px 8px;
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-  h1 { margin: 0 0 4px; font-size: 1.8rem; }
-  header p { margin: 0; color: var(--muted); }
+  <head>
+    <title>HexGL by BKcore</title>
+    <meta charset="utf-8">
+    <meta name="description" content="HexGL is a futuristic racing game built by Thibaut Despoulain (BKcore) using HTML5, Javascript and WebGL. Come challenge your friends on this fast-paced 3D game!">
+    <meta property="og:title" content="HexGL, the HTML5 futuristic racing game." />
+    <meta property="og:type" content="game" />
+    <meta property="og:url" content="http://hexgl.bkcore.com/" />
+    <meta property="og:image" content="http://hexgl.bkcore.com/image.png" />
+    <meta property="og:site_name" content="HexGL by BKcore" />
+    <meta property="fb:admins" content="1482017639" />
+    <link rel="icon" href="http://hexgl.bkcore.com/favicon.png" type="image/png">
+    <link rel="shortcut icon" href="http://hexgl.bkcore.com/favicon.png" type="image/png">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" href="css/multi.css" type="text/css" charset="utf-8">
+    <link rel="stylesheet" href="css/fonts.css" type="text/css" charset="utf-8">
+    <style>
+      body {
+        padding:0;
+        margin:0;
+      }
+      canvas { pointer-events:none; width: 100%;}
+      #overlay{
+        position: absolute;
+        z-index: 9999;
+        top: 0;
+        left: 0;
+        width: 100%;
+      }
+    </style>
+    <script type="text/javascript">
+    //analytics
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-26274524-4']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+    </script>
+  </head>
 
-  main { max-width: 1100px; margin: 0 auto; padding: 16px 20px 48px; }
-
-  #search {
-    width: 100%;
-    max-width: 360px;
-    padding: 10px 14px;
-    margin: 12px 0 20px;
-    border-radius: 10px;
-    border: 1px solid #343845;
-    background: var(--card);
-    color: var(--text);
-    font-size: 1rem;
-  }
-
-  /* ---------- Game grid ---------- */
-  #grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 16px;
-  }
-  .game {
-    all: unset;
-    cursor: pointer;
-    background: var(--card);
-    border-radius: 14px;
-    overflow: hidden;
-    transition: transform .12s ease, background .12s ease;
-    display: flex;
-    flex-direction: column;
-  }
-  .game:hover, .game:focus-visible { background: var(--card-hover); transform: translateY(-3px); }
-  .game:focus-visible { outline: 2px solid var(--accent); }
-  .thumb {
-    aspect-ratio: 16 / 10;
-    background: linear-gradient(135deg, #3a3f55, #1e2028);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 2.4rem; font-weight: 700; color: var(--accent);
-  }
-  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .info { padding: 10px 12px 14px; }
-  .title { font-weight: 600; }
-  .cat { color: var(--muted); font-size: .85rem; margin-top: 2px; }
-  #empty { color: var(--muted); display: none; }
-
-  /* ---------- Player view ---------- */
-  #player { display: none; }
-  #bar {
-    display: flex; gap: 10px; align-items: center;
-    margin-bottom: 12px; flex-wrap: wrap;
-  }
-  #bar h2 { margin: 0; font-size: 1.2rem; flex: 1; }
-  button.ctl {
-    background: var(--card);
-    color: var(--text);
-    border: 1px solid #343845;
-    border-radius: 10px;
-    padding: 8px 14px;
-    font-size: .95rem;
-    cursor: pointer;
-  }
-  button.ctl:hover { background: var(--card-hover); }
-  #frame-wrap {
-    background: #000;
-    border-radius: 12px;
-    overflow: hidden;
-    aspect-ratio: 16 / 10;
-    width: 100%;
-  }
-  #frame-wrap iframe { width: 100%; height: 100%; border: 0; display: block; }
-  #credit { color: var(--muted); font-size: .85rem; margin-top: 10px; }
-</style>
-</head>
-<body>
-
-<header>
-  <h1>Game Hub</h1>
-  <p>Pick a game and play it right here.</p>
-</header>
-
-<main>
-  <!-- Game list view -->
-  <section id="library">
-    <input id="search" type="search" placeholder="Search games..." aria-label="Search games">
-    <div id="grid"></div>
-    <p id="empty">No games match that search.</p>
-  </section>
-
-  <!-- Game player view -->
-  <section id="player">
-    <div id="bar">
-      <button class="ctl" id="back">&larr; All games</button>
-      <h2 id="player-title"></h2>
-      <button class="ctl" id="reload">Reload</button>
-      <button class="ctl" id="fullscreen">Fullscreen</button>
+  <body>
+    <div id="step-1">
+      <div id="global"></div>
+      <div id="title">
+      </div>
+      <div id="menucontainer">
+        <div id="menu">
+          <div id="start">Start</div>
+          <div id="s-controlType">Controls: Keyboard</div>
+          <div id="s-quality">Quality: High</div>
+          <div id="s-hud">HUD: On</div>
+          <div id="s-godmode" style="display: none">Godmode: Off</div>
+          <div id="s-credits">Credits</div>
+        </div>
+      </div>
     </div>
-    <div id="frame-wrap"></div>
-    <div id="credit"></div>
-  </section>
-</main>
+    <div id="step-2" style="display: none">
+      <div id="ctrl-help">Click/Touch to continue.</div>
+    </div>
+    <div id="step-3" style="display: none">
+      <div id="progressbar"></div>
+    </div>
+    <div id="step-4" style="display: none">
+      <div id="overlay"></div>
+      <div id="main"></div>
+    </div>
+    <div id="step-5" style="display: none">
+      <div id="time"></div>
+      <div id="ctrl-help">Click/Touch to continue.</div>
+    </div>
+    <div id="credits" style="display: none">
+      <h3>Code</h3>
+      <p><b>Concept and Development</b><br>Thibaut Despoulain (BKcore)</p>
+      <p><b>Contributors</b><br>townxelliot<br>mahesh.kk</p>
+      <p><b>Technologies</b><br>WebGL<br>JavaScript<br>CoffeeScript<br>Three.js<br>LeapMotion</p>
+      <h3>Graphics</h3>
+      <p><b>HexMKI base model</b><br>Charnel</p>
+      <p><b>Track texture</b><br>Nobiax</p>
+      <h4>Click anywhere to continue.</h4>
+    </div>
 
-<script>
-/* ==========================================================
-   ADD YOUR GAMES HERE
-   One entry per game. Copy a block, change the values.
+    <div id="leapinfo" style="display: none"></div>
 
-   id:       short unique name, no spaces (used in the URL)
-   title:    name shown on the button
-   category: label under the title (Puzzle, Arcade, etc.)
-   path:     link to the game's index.html (a folder in your site
-             like "games/my-game/index.html", or a full https:// URL
-             for a game whose owner allows embedding)
-   thumb:    optional image path, e.g. "games/my-game/thumb.png"
-             (leave "" to show a letter instead)
-   credit:   optional line shown under the game, e.g. author + licence
-   ========================================================== */
-const GAMES = [
-  {
-    id: "example-one",
-    title: "Example Game One",
-    category: "Puzzle",
-    path: "games/example-one/index.html",
-    thumb: "",
-    credit: "Made by You. MIT licence."
-  },
-  {
-    id: "example-two",
-    title: "Example Game Two",
-    category: "Arcade",
-    path: "games/example-two/index.html",
-    thumb: "",
-    credit: ""
-  }
-];
+    <script src="libs/leap-0.4.1.min.js"></script>
+    <script src="libs/Three.dev.js"></script>
+    <script src="libs/ShaderExtras.js"></script>
+    <script src="libs/postprocessing/EffectComposer.js"></script>
+    <script src="libs/postprocessing/RenderPass.js"></script>
+    <script src="libs/postprocessing/BloomPass.js"></script>
+    <script src="libs/postprocessing/ShaderPass.js"></script>
+    <script src="libs/postprocessing/MaskPass.js"></script>
+    <script src="libs/Detector.js"></script>
+    <script src="libs/Stats.js"></script>
+    <script src="libs/DAT.GUI.min.js"></script>
 
-/* ---------- Everything below runs the site; you shouldn't need to edit it ---------- */
-const grid = document.getElementById("grid");
-const emptyMsg = document.getElementById("empty");
-const library = document.getElementById("library");
-const player = document.getElementById("player");
-const frameWrap = document.getElementById("frame-wrap");
-const search = document.getElementById("search");
+    <script src="bkcore.coffee/controllers/TouchController.js"></script>
+    <script src="bkcore.coffee/controllers/OrientationController.js"></script>
+    <script src="bkcore.coffee/controllers/GamepadController.js"></script>
 
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
-}
+    <script src="bkcore.coffee/Timer.js"></script>
+    <script src="bkcore.coffee/ImageData.js"></script>
+    <script src="bkcore.coffee/Utils.js"></script>
 
-function renderGrid(filter = "") {
-  const q = filter.trim().toLowerCase();
-  const shown = GAMES.filter(g =>
-    g.title.toLowerCase().includes(q) || (g.category || "").toLowerCase().includes(q)
-  );
-  grid.innerHTML = shown.map(g => `
-    <button class="game" data-id="${escapeHtml(g.id)}">
-      <div class="thumb">
-        ${g.thumb ? `<img src="${escapeHtml(g.thumb)}" alt="" loading="lazy">` : escapeHtml(g.title.charAt(0))}
-      </div>
-      <div class="info">
-        <div class="title">${escapeHtml(g.title)}</div>
-        <div class="cat">${escapeHtml(g.category || "")}</div>
-      </div>
-    </button>
-  `).join("");
-  emptyMsg.style.display = shown.length ? "none" : "block";
-}
+    <script src="bkcore/threejs/RenderManager.js"></script>
+    <script src="bkcore/threejs/Shaders.js"></script>
+    <script src="bkcore/threejs/Particles.js"></script>
+    <script src="bkcore/threejs/Loader.js"></script>
 
-function openGame(id) {
-  const g = GAMES.find(x => x.id === id);
-  if (!g) { showLibrary(); return; }
-  document.getElementById("player-title").textContent = g.title;
-  document.getElementById("credit").textContent = g.credit || "";
-  frameWrap.innerHTML = "";
-  const iframe = document.createElement("iframe");
-  iframe.src = g.path;
-  iframe.title = g.title;
-  iframe.allow = "autoplay; fullscreen; gamepad";
-  iframe.allowFullscreen = true;
-  iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-pointer-lock allow-popups");
-  frameWrap.appendChild(iframe);
-  library.style.display = "none";
-  player.style.display = "block";
-  document.title = g.title + " - Game Hub";
-  window.scrollTo(0, 0);
-}
+    <script src="bkcore/Audio.js"></script>
 
-function showLibrary() {
-  frameWrap.innerHTML = "";          // stops the game and its audio
-  player.style.display = "none";
-  library.style.display = "block";
-  document.title = "Game Hub";
-}
+    <script src="bkcore/hexgl/HUD.js"></script>
+    <script src="bkcore/hexgl/RaceData.js"></script>
+    <script src="bkcore/hexgl/ShipControls.js"></script>
+    <script src="bkcore/hexgl/ShipEffects.js"></script>
+    <script src="bkcore/hexgl/CameraChase.js"></script>
+    <script src="bkcore/hexgl/Gameplay.js"></script>
 
-/* Clicking a game button sets the URL hash (#example-one), so the browser's
-   back button works and you can share a direct link to a game. */
-grid.addEventListener("click", e => {
-  const btn = e.target.closest(".game");
-  if (btn) location.hash = btn.dataset.id;
-});
-document.getElementById("back").addEventListener("click", () => { location.hash = ""; });
-document.getElementById("reload").addEventListener("click", () => {
-  const f = frameWrap.querySelector("iframe");
-  if (f) f.src = f.src;
-});
-document.getElementById("fullscreen").addEventListener("click", () => {
-  const f = frameWrap.querySelector("iframe");
-  if (f && f.requestFullscreen) f.requestFullscreen();
-});
-search.addEventListener("input", () => renderGrid(search.value));
+    <script src="bkcore/hexgl/tracks/Cityscape.js"></script>
 
-function route() {
-  const id = decodeURIComponent(location.hash.slice(1));
-  if (id) openGame(id); else showLibrary();
-}
-window.addEventListener("hashchange", route);
+    <script src="bkcore/hexgl/HexGL.js"></script>
 
-renderGrid();
-route();
-</script>
-</body>
+    <script src="launch.js"></script>
+
+  </body>
 </html>
